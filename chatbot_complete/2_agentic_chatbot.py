@@ -1,9 +1,21 @@
+import importlib.util
+from pathlib import Path
+
 import chainlit as cl
 import dotenv
 from openai.types.responses import ResponseTextDeltaEvent
 
 from agents import Runner
-from nutrition_agent import nutrition_agent
+
+nutrition_module_path = Path(__file__).resolve().with_name("nutrition_agent.py")
+spec = importlib.util.spec_from_file_location(
+    "_chatbot_complete_nutrition_agent", nutrition_module_path
+)
+if spec is None or spec.loader is None:
+    raise ImportError(f"Unable to load nutrition agent from {nutrition_module_path}")
+nutrition_agent_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(nutrition_agent_module)
+nutrition_agent = nutrition_agent_module.nutrition_agent
 
 dotenv.load_dotenv()
 
@@ -35,9 +47,8 @@ async def on_message(message: cl.Message):
             with cl.Step(name=f"{event.data.item.name}", type="tool") as step:
                 step.input = event.data.item.arguments
                 print(
-                    f"\nTool call: {
-                        event.data.item.name} with args: {
-                        event.data.item.arguments}"
+                    f"\nTool call: {event.data.item.name} "
+                    f"with args: {event.data.item.arguments}"
                 )
 
     await msg.update()

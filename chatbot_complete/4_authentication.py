@@ -1,11 +1,22 @@
+import importlib.util
+import os
+from pathlib import Path
+
 import chainlit as cl
 import dotenv
-import os
-
 from openai.types.responses import ResponseTextDeltaEvent
 
 from agents import Runner, SQLiteSession
-from nutrition_agent import nutrition_agent
+
+nutrition_module_path = Path(__file__).resolve().with_name("nutrition_agent.py")
+spec = importlib.util.spec_from_file_location(
+    "_chatbot_complete_nutrition_agent", nutrition_module_path
+)
+if spec is None or spec.loader is None:
+    raise ImportError(f"Unable to load nutrition agent from {nutrition_module_path}")
+nutrition_agent_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(nutrition_agent_module)
+nutrition_agent = nutrition_agent_module.nutrition_agent
 
 dotenv.load_dotenv()
 
