@@ -7,11 +7,13 @@ import dotenv
 from agents import InputGuardrailTripwireTriggered, Runner, SQLiteSession
 from openai.types.responses import ResponseTextDeltaEvent
 
-if __package__ in (None, ""):
+if __package__ != "multi_agent_chatbot":
     nutrition_module_path = Path(__file__).resolve().with_name("nutrition_agent.py")
     spec = importlib.util.spec_from_file_location(
         "_multi_agent_nutrition_agent", nutrition_module_path
     )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load nutrition agent from {nutrition_module_path}")
     nutrition_agent_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(nutrition_agent_module)
     exa_search_mcp = nutrition_agent_module.exa_search_mcp
