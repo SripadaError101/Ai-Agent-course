@@ -1,10 +1,23 @@
+import importlib.util
 import os
+from pathlib import Path
 
 import chainlit as cl
 import dotenv
 from agents import InputGuardrailTripwireTriggered, Runner, SQLiteSession
-from nutrition_agent import exa_search_mcp, nutrition_agent
 from openai.types.responses import ResponseTextDeltaEvent
+
+if __package__ in (None, ""):
+    nutrition_module_path = Path(__file__).resolve().with_name("nutrition_agent.py")
+    spec = importlib.util.spec_from_file_location(
+        "_multi_agent_nutrition_agent", nutrition_module_path
+    )
+    nutrition_agent_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(nutrition_agent_module)
+    exa_search_mcp = nutrition_agent_module.exa_search_mcp
+    nutrition_agent = nutrition_agent_module.nutrition_agent
+else:
+    from .nutrition_agent import exa_search_mcp, nutrition_agent
 
 dotenv.load_dotenv()
 
